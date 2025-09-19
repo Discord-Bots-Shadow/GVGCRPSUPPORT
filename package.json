@@ -1,0 +1,16 @@
+{
+  "type": "module",
+  "name": "greenville-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.21.2",
+    "node-fetch": "^2.7.0"
+  }
+}
