@@ -11,7 +11,7 @@ export default {
     const cars = db.filter(car => car.user === interaction.user.id);
 
     if (cars.length === 0) {
-      await interaction.reply("🚗 Nu ai nicio masina inregistrata.");
+      await interaction.reply("🚗 Non hai macchine registrate.");
       return;
     }
 
@@ -25,7 +25,7 @@ export default {
     const row = new ActionRowBuilder().addComponents(buttons);
 
     await interaction.reply({
-      content: "🚗 Masinile tale:",
+      content: "🚗 Le tue macchine:",
       components: [row]
     });
   }
