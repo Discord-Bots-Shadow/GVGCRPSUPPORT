@@ -72,7 +72,7 @@ client.on(Events.InteractionCreate, async interaction => {
     const customId = interaction.customId;
     if (customId.startsWith('car-')) {
       const plate = customId.slice(4);
-      const Car = (await import('./models/Car.js')).default;
+      const Car = (await import('./models/Cars.js')).default;
       const car = await Car.findOne({ plate, user: interaction.user.id });
       if (!car) {
         await interaction.reply({ content: "🚫 Car not found or not yours.", ephemeral: true });
