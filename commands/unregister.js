@@ -4,25 +4,25 @@ import fs from 'fs';
 export default {
   data: new SlashCommandBuilder()
     .setName('unregister')
-    .setDescription('Sterge o masina')
-    .addStringOption(opt => opt.setName('marca').setDescription('Marca masinii').setRequired(true))
-    .addStringOption(opt => opt.setName('model').setDescription('Modelul masinii').setRequired(true))
-    .addStringOption(opt => opt.setName('nr_de_inmatriculare').setDescription('Numarul de inmatriculare').setRequired(true)),
+    .setDescription('Remove a car')
+    .addStringOption(opt => opt.setName('make').setDescription('Car make').setRequired(true))
+    .addStringOption(opt => opt.setName('model').setDescription('Car model').setRequired(true))
+    .addStringOption(opt => opt.setName('plate').setDescription('Car plate').setRequired(true)),
 
   async execute(interaction) {
-    const marca = interaction.options.getString('marca');
+    const make = interaction.options.getString('make');
     const model = interaction.options.getString('model');
-    const nrInm = interaction.options.getString('nr_de_inmatriculare');
+    const plate = interaction.options.getString('plate');
 
     let db = JSON.parse(fs.readFileSync('database.json'));
     const newDb = db.filter(car =>
-      !(car.user === interaction.user.id && car.make === marca && car.model === model && car.plate === nrInm)
+      !(car.user === interaction.user.id && car.make === make && car.model === model && car.plate === plate)
     );
 
     fs.writeFileSync('database.json', JSON.stringify(newDb, null, 2));
 
     await interaction.reply({
-      content: `✅ Masina cu numarul de inmatriculare **${nrInm}** a fost stearsa cu succes.`,
+      content: `✅ Car with plate **${plate}** removed successfully.`,
       ephemeral: true
     });
   }
