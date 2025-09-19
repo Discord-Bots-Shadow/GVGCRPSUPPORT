@@ -4,11 +4,11 @@ import fs from 'fs';
 export default {
   data: new SlashCommandBuilder()
     .setName('register')
-    .setDescription('Registra una macchina')
-    .addStringOption(opt => opt.setName('make').setDescription('Marca').setRequired(true))
-    .addStringOption(opt => opt.setName('model').setDescription('Modello').setRequired(true))
-    .addStringOption(opt => opt.setName('color').setDescription('Colore').setRequired(true))
-    .addStringOption(opt => opt.setName('plate').setDescription('Targa').setRequired(true)),
+    .setDescription('Register a car')
+    .addStringOption(opt => opt.setName('make').setDescription('Car make').setRequired(true))
+    .addStringOption(opt => opt.setName('model').setDescription('Car model').setRequired(true))
+    .addStringOption(opt => opt.setName('color').setDescription('Car color').setRequired(true))
+    .addStringOption(opt => opt.setName('plate').setDescription('Car plate').setRequired(true)),
 
   async execute(interaction) {
     const car = {
@@ -23,6 +23,6 @@ export default {
     db.push(car);
     fs.writeFileSync('database.json', JSON.stringify(db, null, 2));
 
-    await interaction.reply(`✅ Macchina registrata: **${car.make} ${car.model}** (${car.plate})`);
+    await interaction.reply(`✅ Car registered: ${car.make}, ${car.model}, ${car.plate}`);
   }
 };
