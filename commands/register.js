@@ -4,26 +4,25 @@ import fs from 'fs';
 export default {
   data: new SlashCommandBuilder()
     .setName('register')
-    .setDescription('Inregistreaza o masina')
-    .addStringOption(opt => opt.setName('marca').setDescription('Marca masinii').setRequired(true))
-    .addStringOption(opt => opt.setName('model').setDescription('Modelul masinii').setRequired(true))
-    .addStringOption(opt => opt.setName('culoare').setDescription('Culoarea masinii').setRequired(true))
-    .addStringOption(opt => opt.setName('nr_de_inmatriculare').setDescription('Numarul de inmatriculare').setRequired(true)),
+    .setDescription('Register a car')
+    .addStringOption(opt => opt.setName('make').setDescription('Car make').setRequired(true))
+    .addStringOption(opt => opt.setName('model').setDescription('Car model').setRequired(true))
+    .addStringOption(opt => opt.setName('color').setDescription('Car color').setRequired(true))
+    .addStringOption(opt => opt.setName('plate').setDescription('Car plate').setRequired(true)),
 
   async execute(interaction) {
     const car = {
       user: interaction.user.id,
-      make: interaction.options.getString('marca'),
+      make: interaction.options.getString('make'),
       model: interaction.options.getString('model'),
-      color: interaction.options.getString('culoare'),
-      plate: interaction.options.getString('nr_de_inmatriculare')
+      color: interaction.options.getString('color'),
+      plate: interaction.options.getString('plate')
     };
 
-    // Legge e scrive il database
     const db = JSON.parse(fs.readFileSync('database.json'));
     db.push(car);
     fs.writeFileSync('database.json', JSON.stringify(db, null, 2));
 
-    await interaction.reply(`✅ Macchina registrata: ${car.make}, ${car.model}, ${car.plate}`);
+    await interaction.reply(`✅ Car registered: ${car.make}, ${car.model}, ${car.plate}`);
   }
 };
