@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import Car from '../models/Car.js';
+import Car from '../models/Cars.js';
 
 export default {
   data: new SlashCommandBuilder()
