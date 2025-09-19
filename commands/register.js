@@ -19,10 +19,11 @@ export default {
       plate: interaction.options.getString('nr_de_inmatriculare')
     };
 
+    // Legge e scrive il database
     const db = JSON.parse(fs.readFileSync('database.json'));
     db.push(car);
     fs.writeFileSync('database.json', JSON.stringify(db, null, 2));
 
-    await interaction.reply(`✅ Masina inregistrata: ${car.make}, ${car.model}, ${car.plate}`);
+    await interaction.reply(`✅ Macchina registrata: ${car.make}, ${car.model}, ${car.plate}`);
   }
 };
