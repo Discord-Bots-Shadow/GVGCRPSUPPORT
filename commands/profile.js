@@ -4,21 +4,21 @@ import fs from 'fs';
 export default {
   data: new SlashCommandBuilder()
     .setName('profile')
-    .setDescription('Mostra le tue macchine registrate'),
+    .setDescription('Show your registered cars'),
 
   async execute(interaction) {
     const db = JSON.parse(fs.readFileSync('database.json'));
     const cars = db.filter(car => car.user === interaction.user.id);
 
     if (cars.length === 0) {
-      await interaction.reply("🚗 Non hai nessuna macchina registrata.");
+      await interaction.reply("🚗 You don't have any registered cars.");
       return;
     }
 
-    // Dividiamo i bottoni in gruppi da 5
     const rows = [];
     for (let i = 0; i < cars.length; i += 5) {
-      const buttons = cars.slice(i, i + 5).map(car =>
+      const slice = cars.slice(i, i + 5);
+      const buttons = slice.map(car =>
         new ButtonBuilder()
           .setCustomId(`car-${car.plate}`)
           .setLabel(`${car.make} ${car.model}`)
@@ -28,7 +28,7 @@ export default {
     }
 
     await interaction.reply({
-      content: "🚗 Le tue macchine:",
+      content: "🚗 Your cars:",
       components: rows
     });
   }
