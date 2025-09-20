@@ -1,90 +1,60 @@
 import express from "express";
 import dotenv from "dotenv";
 import { Client, GatewayIntentBits, Events, Collection } from "discord.js";
-import fs from "fs";
 import mongoose from "mongoose";
-import fetch from "node-fetch";
+import fs from "fs";
 
 dotenv.config();
 
-// 🔹 Keep-Alive Express
 const app = express();
-app.get("/", (req, res) => {
-  res.send("Bot is alive!");
-});
-
-// Porta dinamica
+app.get("/", (req, res) => res.send("Bot is alive!"));
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ KeepAlive attivo su porta ${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ KeepAlive on port ${PORT}`));
 
-// 🔹 Ping URL esterno (Uptime Robot o altro)
-const REPL_URL = process.env.KEEP_ALIVE_URL;
-if (REPL_URL) {
+if (process.env.KEEP_ALIVE_URL) {
   setInterval(() => {
-    fetch(REPL_URL)
-      .then(res => console.log(`Ping a ${REPL_URL} -> ${res.status}`))
-      .catch(err => console.error("Errore nel ping:", err));
-  }, 10 * 60 * 1000); // ogni 10 minuti
+    fetch(process.env.KEEP_ALIVE_URL)
+      .then(res => console.log(`Ping -> ${res.status}`))
+      .catch(err => console.error(err));
+  }, 10 * 60 * 1000);
 }
 
-// 🔹 Connetti a MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch(err => console.error("MongoDB connection error:", err));
 
-// 🔹 Client Discord
-const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
-});
-
-// 🔹 Comandi
+// Discord client
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const commandFiles = fs.readdirSync("./commands").filter(f => f.endsWith(".js"));
 
 for (const file of commandFiles) {
   const command = await import(`./commands/${file}`);
   client.commands.set(command.default.data.name, command.default);
 }
 
-// 🔹 Eventi
-client.once(Events.ClientReady, () => {
-  console.log(`🤖 Logged in as ${client.user.tag}`);
-});
+client.once(Events.ClientReady, () => console.log(`🤖 Logged in as ${client.user.tag}`));
 
 client.on(Events.InteractionCreate, async interaction => {
   if (interaction.isChatInputCommand()) {
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
-
-    try {
-      await command.execute(interaction);
-    } catch (error) {
+    try { await command.execute(interaction); } 
+    catch (error) {
       console.error(error);
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: '❌ Error executing the command!', ephemeral: true });
-      } else {
-        await interaction.reply({ content: '❌ Error executing the command!', ephemeral: true });
-      }
+      if (interaction.replied || interaction.deferred)
+        await interaction.followUp({ content: 'Error executing command!', ephemeral: true });
+      else
+        await interaction.reply({ content: 'Error executing command!', ephemeral: true });
     }
   } else if (interaction.isButton()) {
-    const customId = interaction.customId;
-    if (customId.startsWith('car-')) {
-      const plate = customId.slice(4);
-      const Car = (await import('./models/Cars.js')).default;
-      const car = await Car.findOne({ plate, user: interaction.user.id });
-      if (!car) {
-        await interaction.reply({ content: "🚫 Car not found or not yours.", ephemeral: true });
-        return;
-      }
-      await interaction.reply({
-        content: `🚗 **Car details:**\n- Make: ${car.make}\n- Model: ${car.model}\n- Color: ${car.color}\n- Plate: ${car.plate}`,
-        ephemeral: true
-      });
-    }
+    const plate = interaction.customId.split("-")[1];
+    const Car = (await import("./models/Cars.js")).default;
+    const car = await Car.findOne({ plate, user: interaction.user.id });
+    if (!car) return interaction.reply({ content: "🚫 Car not found or not yours.", ephemeral: true });
+    await interaction.reply({ content: `🚗 Details:\n- Make: ${car.make}\n- Model: ${car.model}\n- Color: ${car.color}\n- Plate: ${car.plate}`, ephemeral: true });
   }
 });
 
-// 🔹 Login Discord
 client.login(process.env.DISCORD_TOKEN);
