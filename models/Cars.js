@@ -5,7 +5,7 @@ const carSchema = new mongoose.Schema({
   make: { type: String, required: true },
   model: { type: String, required: true },
   color: { type: String, required: true },
-  plate: { type: String, required: true, unique: true }
-});
+  plate: { type: String, required: true } // ✅ No unique
+}, { timestamps: true }); // timestamps opzionali per data creazione/modifica
 
 export default mongoose.model("Car", carSchema);
