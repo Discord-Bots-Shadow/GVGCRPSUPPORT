@@ -18,18 +18,24 @@ export default {
         return;
       }
 
-      const buttons = cars.slice(0, 5).map(car =>
-        new ButtonBuilder()
-          .setCustomId(`car-${car.plate}`)
-          .setLabel(`${car.make} ${car.model}`)
-          .setStyle(ButtonStyle.Primary)
-      );
-
-      const row = new ActionRowBuilder().addComponents(buttons);
+      // Creiamo le righe dei bottoni (max 5 bottoni per riga)
+      const rows = [];
+      for (let i = 0; i < cars.length; i += 5) {
+        const slice = cars.slice(i, i + 5);
+        const row = new ActionRowBuilder().addComponents(
+          slice.map(car =>
+            new ButtonBuilder()
+              .setCustomId(`car-${car.plate}`)
+              .setLabel(`${car.make} ${car.model}`)
+              .setStyle(ButtonStyle.Primary)
+          )
+        );
+        rows.push(row);
+      }
 
       await interaction.reply({
         content: "🚗 Your registered cars:",
-        components: [row]
+        components: rows
       });
     } catch (error) {
       console.error("❌ Error in /profile:", error);
