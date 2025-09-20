@@ -8,28 +8,31 @@ export default {
     .addStringOption(opt => opt.setName("make").setDescription("Car make").setRequired(true))
     .addStringOption(opt => opt.setName("model").setDescription("Car model").setRequired(true))
     .addStringOption(opt => opt.setName("color").setDescription("Car color").setRequired(true))
-    .addStringOption(opt => opt.setName("plate").setDescription("Car plate").setRequired(true)),
+    .addStringOption(opt => opt.setName("plate").setDescription("Car plate number").setRequired(true)),
 
   async execute(interaction) {
-    console.log("➡️ /register called by", interaction.user.tag);
+    const make = interaction.options.getString("make");
+    const model = interaction.options.getString("model");
+    const color = interaction.options.getString("color");
+    const plate = interaction.options.getString("plate");
 
     try {
+      // Creazione nuova auto senza controlli duplicati
       const car = new Car({
         user: interaction.user.id,
-        make: interaction.options.getString("make"),
-        model: interaction.options.getString("model"),
-        color: interaction.options.getString("color"),
-        plate: interaction.options.getString("plate")
+        make,
+        model,
+        color,
+        plate
       });
 
       await car.save();
-      console.log("✅ Car saved:", car);
-
-      await interaction.reply(`✅ Car registered: **${car.make} ${car.model} (${car.plate})**`);
+      await interaction.reply(`✅ Car registered: ${make} ${model}, Plate: ${plate}`);
+      console.log(`➡️ /register: ${interaction.user.tag} registered ${make} ${model} (${plate})`);
     } catch (error) {
       console.error("❌ Error in /register:", error);
       await interaction.reply({
-        content: "❌ Error registering the car. Maybe the plate already exists?",
+        content: "❌ Error registering the car.",
         ephemeral: true
       });
     }
