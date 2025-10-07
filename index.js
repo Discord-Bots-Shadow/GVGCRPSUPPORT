@@ -1,90 +1,101 @@
 import express from "express";
 import dotenv from "dotenv";
-import { Client, GatewayIntentBits, Events, Collection } from "discord.js";
-import mongoose from "mongoose";
 import fs from "fs";
-import fetch from "node-fetch"; // add this if you're using fetch in Node.js < 18
+import mongoose from "mongoose";
+import {
+  Client,
+  GatewayIntentBits,
+  Collection,
+  Events,
+} from "discord.js";
 
-// Load environment variables
 dotenv.config();
 
-// === KeepAlive Server ===
+// --- Keep alive for Render ---
 const app = express();
 app.get("/", (req, res) => res.send("✅ Bot is alive!"));
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ KeepAlive on port ${PORT}`));
+app.listen(PORT, () => console.log(`🌐 KeepAlive server running on port ${PORT}`));
 
-// Optional: self-ping for Render free tier
 if (process.env.KEEP_ALIVE_URL) {
   setInterval(() => {
     fetch(process.env.KEEP_ALIVE_URL)
-      .then(res => console.log(`🔁 KeepAlive ping -> ${res.status}`))
-      .catch(err => console.error("KeepAlive error:", err));
-  }, 10 * 60 * 1000); // every 10 minutes
+      .then(() => console.log("🔁 Pinged self to stay awake"))
+      .catch(() => {});
+  }, 10 * 60 * 1000);
 }
 
-// === MongoDB Connection ===
-mongoose.connect(process.env.MONGO_URI)
+// --- MongoDB Connection ---
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// === Discord Client Setup ===
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-client.commands = new Collection();
-
-// Load command files dynamically
-const commandFiles = fs.readdirSync("./commands").filter(file => file.endsWith(".js"));
-
-for (const file of commandFiles) {
-  const commandModule = await import(`./commands/${file}`);
-  const command = commandModule.default;
-  client.commands.set(command.data.name, command);
-}
-
-// === Bot Ready Event ===
-client.once(Events.ClientReady, () => {
-  console.log(`🤖 Logged in as ${client.user.tag}`);
+// --- Discord Bot Setup ---
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
 
-// === Interaction Handling ===
-client.on(Events.InteractionCreate, async interaction => {
-  // Slash command handler
+client.commands = new Collection();
+
+// --- Load Commands ---
+const commandFiles = fs.readdirSync("./commands").filter((f) => f.endsWith(".js"));
+for (const file of commandFiles) {
+  const command = await import(`./commands/${file}`);
+  client.commands.set(command.default.data.name, command.default);
+  console.log(`🧩 Loaded command: ${command.default.data.name}`);
+}
+
+// --- When Bot is Ready ---
+client.once(Events.ClientReady, (c) => {
+  console.log(`🤖 Logged in as ${c.user.tag}`);
+});
+
+// --- Interaction Handling ---
+client.on(Events.InteractionCreate, async (interaction) => {
+  // Slash Command Handler
   if (interaction.isChatInputCommand()) {
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
 
     try {
       await command.execute(interaction);
-    } catch (error) {
-      console.error("Command error:", error);
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: "⚠️ Error executing command!", ephemeral: true });
-      } else {
-        await interaction.reply({ content: "⚠️ Error executing command!", ephemeral: true });
-      }
+    } catch (err) {
+      console.error(err);
+      const reply = { content: "❌ Error executing command!", ephemeral: true };
+      if (interaction.replied || interaction.deferred)
+        await interaction.followUp(reply);
+      else
+        await interaction.reply(reply);
     }
   }
 
-  // Optional: Example of button interaction (if you use car buttons)
-  else if (interaction.isButton()) {
-    const plate = interaction.customId.split("-")[1];
-    const Car = (await import("./models/Cars.js")).default;
-    const car = await Car.findOne({ plate, user: interaction.user.id });
+  // Button Handling
+  if (interaction.isButton()) {
+    // --- /message command buttons ---
+    if (interaction.customId === "message-send") {
+      const embed = interaction.message.embeds[0];
+      if (!embed) return interaction.reply({ content: "❌ No embed found.", ephemeral: true });
 
-    if (!car) {
-      return interaction.reply({ content: "🚫 Car not found or not yours.", ephemeral: true });
+      const emoji = embed.footer?.text?.replace("Auto reaction: ", "") || "👍";
+
+      try {
+        const sent = await interaction.channel.send({ embeds: [embed] });
+        await sent.react(emoji).catch(() => {});
+        await interaction.reply({ content: "✅ Message sent successfully!", ephemeral: true });
+      } catch (err) {
+        console.error(err);
+        await interaction.reply({ content: "❌ Failed to send message.", ephemeral: true });
+      }
     }
 
-    await interaction.reply({
-      content: `🚗 Car Details:
-- Make: ${car.make}
-- Model: ${car.model}
-- Color: ${car.color}
-- Plate: ${car.plate}`,
-      ephemeral: true
-    });
+    if (interaction.customId === "message-cancel") {
+      await interaction.reply({ content: "❌ Message cancelled.", ephemeral: true });
+    }
+
+    // You can add other button logic here (like car system, etc.)
   }
 });
 
-// === Login to Discord ===
+// --- Login to Discord ---
 client.login(process.env.DISCORD_TOKEN);
