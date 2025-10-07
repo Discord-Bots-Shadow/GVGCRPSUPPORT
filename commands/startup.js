@@ -1,47 +1,46 @@
-import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
+import GuildConfig from "../models/GuildConfig.js";
 
 export default {
   data: new SlashCommandBuilder()
-    .setName('startup')
-    .setDescription('Announce that a session is starting.')
+    .setName("startup")
+    .setDescription("Announce that a session is starting.")
     .addUserOption(option =>
-      option.setName('host')
-        .setDescription('Tag the session host.')
-        .setRequired(true))
+      option.setName("host").setDescription("Tag the session host.").setRequired(true)
+    )
     .addStringOption(option =>
-      option.setName('type')
-        .setDescription('Type of session.')
-        .setRequired(true))
+      option.setName("type").setDescription("Type of session.").setRequired(true)
+    )
     .addIntegerOption(option =>
-      option.setName('needed')
-        .setDescription('Number of ✅ reactions needed to start the session.')
-        .setRequired(true)),
+      option.setName("needed").setDescription("Number of ✅ reactions needed to start.").setRequired(true)
+    ),
 
   async execute(interaction) {
-    const host = interaction.options.getUser('host');
-    const type = interaction.options.getString('type');
-    const needed = interaction.options.getInteger('needed');
-    const sessionHostRoleId = '1416802953146400840';
+    const host = interaction.options.getUser("host");
+    const type = interaction.options.getString("type");
+    const needed = interaction.options.getInteger("needed");
 
-    if (!interaction.member.roles.cache.has(sessionHostRoleId)) {
-      return await interaction.reply({
-        content: '🚫 You must have the **Session Host** role to use this command.',
-        ephemeral: true
-      });
-    }
+    const config = await GuildConfig.findOne({ guildId: interaction.guild.id });
+    const hostRoleId = config?.hostRoleId;
+
+    if (!hostRoleId)
+      return interaction.reply({ content: "⚙️ Please run `/setup` first to configure host role.", ephemeral: true });
+
+    if (!interaction.member.roles.cache.has(hostRoleId))
+      return interaction.reply({ content: "🚫 You must have the **Host** role to use this command.", ephemeral: true });
 
     const embed = new EmbedBuilder()
-      .setTitle('🚦 Session Announcement')
-      .setDescription(`A session is being hosted!`)
+      .setTitle("🚦 Session Announcement")
+      .setDescription("A session is being hosted!")
       .addFields(
-        { name: '👤 Host', value: `${host}`, inline: true },
-        { name: '🕒 Type', value: `${type}`, inline: true },
-        { name: '✅ Needed Reactions', value: `${needed}`, inline: true }
+        { name: "👤 Host", value: `${host}`, inline: true },
+        { name: "🕒 Type", value: `${type}`, inline: true },
+        { name: "✅ Needed Reactions", value: `${needed}`, inline: true }
       )
-      .setColor('Green')
+      .setColor("Green")
       .setTimestamp();
 
     const msg = await interaction.reply({ embeds: [embed], fetchReply: true });
-    await msg.react('✅');
-  }
+    await msg.react("✅");
+  },
 };
