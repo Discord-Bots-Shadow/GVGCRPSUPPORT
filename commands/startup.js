@@ -1,56 +1,47 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
 
-const SESSION_HOST_ROLE_ID = '1416802953146400840'; // your Session Host role ID
-
-module.exports = {
+export default {
   data: new SlashCommandBuilder()
     .setName('startup')
-    .setDescription('Announce a Greenville session startup.')
+    .setDescription('Announce that a session is starting.')
     .addUserOption(option =>
       option.setName('host')
-        .setDescription('Select the host of the session')
+        .setDescription('Tag the session host.')
         .setRequired(true))
     .addStringOption(option =>
       option.setName('type')
-        .setDescription('Type of session (e.g. RP, public, convoy)')
-        .setRequired(true))
-    .addStringOption(option =>
-      option.setName('time')
-        .setDescription('Time of the session')
+        .setDescription('Type of session.')
         .setRequired(true))
     .addIntegerOption(option =>
-      option.setName('needed_reactions')
-        .setDescription('Number of ✅ reactions needed to start')
+      option.setName('needed')
+        .setDescription('Number of ✅ reactions needed to start the session.')
         .setRequired(true)),
 
   async execute(interaction) {
-    // Check role
-    if (!interaction.member.roles.cache.has(SESSION_HOST_ROLE_ID)) {
-      return interaction.reply({
-        content: '❌ You do not have permission to use this command (Session Host only).',
-        ephemeral: true,
+    const host = interaction.options.getUser('host');
+    const type = interaction.options.getString('type');
+    const needed = interaction.options.getInteger('needed');
+    const sessionHostRoleId = '1416802953146400840';
+
+    if (!interaction.member.roles.cache.has(sessionHostRoleId)) {
+      return await interaction.reply({
+        content: '🚫 You must have the **Session Host** role to use this command.',
+        ephemeral: true
       });
     }
 
-    const host = interaction.options.getUser('host');
-    const type = interaction.options.getString('type');
-    const time = interaction.options.getString('time');
-    const neededReactions = interaction.options.getInteger('needed_reactions');
-
     const embed = new EmbedBuilder()
-      .setColor(0x00AE86)
-      .setTitle('🚗 Session Startup')
-      .setDescription('We are hosting a session!')
+      .setTitle('🚦 Session Announcement')
+      .setDescription(`A session is being hosted!`)
       .addFields(
-        { name: 'Host', value: `${host}`, inline: true },
-        { name: 'Type of Session', value: type, inline: true },
-        { name: 'Time', value: time, inline: true },
-        { name: 'Goal', value: `We need **${neededReactions}** ✅ reactions to start the session.` }
+        { name: '👤 Host', value: `${host}`, inline: true },
+        { name: '🕒 Type', value: `${type}`, inline: true },
+        { name: '✅ Needed Reactions', value: `${needed}`, inline: true }
       )
+      .setColor('Green')
       .setTimestamp();
 
-    // Send message and react to it
-    const message = await interaction.reply({ content: '@everyone', embeds: [embed], fetchReply: true });
-    await message.react('✅');
-  },
+    const msg = await interaction.reply({ embeds: [embed], fetchReply: true });
+    await msg.react('✅');
+  }
 };
