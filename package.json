@@ -1,16 +1,17 @@
 {
-  "type": "commonjs",
   "name": "greenville-bot",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "deploy": "node deploy-commands.js"
   },
   "dependencies": {
-    "discord.js": "^14.11.0",
-    "dotenv": "^16.0.3",
-    "express": "^4.21.2",
-    "node-fetch": "^2.7.0"
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "mongoose": "^8.7.0",
+    "node-fetch": "^3.3.2"
   }
 }
