@@ -1,45 +1,46 @@
 import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
-import GuildConfig from "../models/GuildConfig.js";
 
 export default {
   data: new SlashCommandBuilder()
     .setName("startup")
-    .setDescription("Announce that a session is starting.")
-    .addUserOption(opt => opt.setName("host").setDescription("Tag the session host.").setRequired(true))
-    .addStringOption(opt => opt.setName("type").setDescription("Type of session.").setRequired(true))
-    .addIntegerOption(opt => opt.setName("needed").setDescription("Number of ✅ reactions needed.").setRequired(true)),
+    .setDescription("Announce that a session has started.")
+    .addUserOption(option =>
+      option
+        .setName("host")
+        .setDescription("Tag the host of the session.")
+        .setRequired(true)
+    )
+    .addStringOption(option =>
+      option
+        .setName("link")
+        .setDescription("Session link (e.g., game server or join link).")
+        .setRequired(true)
+    ),
 
   async execute(interaction) {
-    // Defer early if you’ll do async work
-    await interaction.deferReply({ ephemeral: true });
-
-    const config = await GuildConfig.findOne({ guildId: interaction.guild.id });
-    if (!config || !config.hostRoleId) {
-      return interaction.editReply("⚠️ Bot is not set up in this server. Please use `/setup`.");
-    }
-
-    if (!interaction.member.roles.cache.has(config.hostRoleId)) {
-      return interaction.editReply("🚫 You must have the Host role to use this command.");
-    }
-
     const host = interaction.options.getUser("host");
-    const type = interaction.options.getString("type");
-    const needed = interaction.options.getInteger("needed");
+    const link = interaction.options.getString("link");
+    const sessionHostRoleId = "1416802953146400840"; // Session Host role ID
 
+    // Check for permission
+    if (!interaction.member.roles.cache.has(sessionHostRoleId)) {
+      return await interaction.reply({
+        content: "🚫 You must have the **Session Host** role to use this command.",
+        ephemeral: true,
+      });
+    }
+
+    // Build embed
     const embed = new EmbedBuilder()
-      .setTitle("🚦 Session Announcement")
-      .setDescription("A session is being hosted!")
+      .setTitle("🟢 Session Started")
       .addFields(
         { name: "👤 Host", value: `${host}`, inline: true },
-        { name: "🕒 Type", value: `${type}`, inline: true },
-        { name: "✅ Needed", value: `${needed}`, inline: true }
+        { name: "🔗 Link", value: `${link}`, inline: true }
       )
       .setColor("Green")
       .setTimestamp();
 
-    const msg = await interaction.channel.send({ embeds: [embed] });
-    await msg.react("✅");
-
-    return interaction.editReply("✅ Session announced!");
+    // Send message
+    await interaction.reply({ content: "@everyone", embeds: [embed] });
   },
 };
