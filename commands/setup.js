@@ -7,12 +7,14 @@ export default {
     .setDescription("Set up GVGCRP Bot for this server")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addRoleOption(option =>
-      option.setName("hostrole")
+      option
+        .setName("hostrole")
         .setDescription("Role ID or mention for session hosts")
         .setRequired(true)
     )
     .addRoleOption(option =>
-      option.setName("adminrole")
+      option
+        .setName("adminrole")
         .setDescription("Role ID or mention for server admins")
         .setRequired(false)
     ),
@@ -23,18 +25,15 @@ export default {
     const adminRole = interaction.options.getRole("adminrole");
 
     let config = await GuildConfig.findOne({ guildId });
-    if (!config) {
-      config = new GuildConfig({ guildId });
-    }
+    if (!config) config = new GuildConfig({ guildId });
 
     config.hostRoleId = hostRole.id;
     if (adminRole) config.adminRoleId = adminRole.id;
-
     await config.save();
 
-    await interaction.reply({
+    // ✅ Use editReply instead of reply (since it was deferred)
+    await interaction.editReply({
       content: `✅ Configuration saved!\n**Host Role:** ${hostRole}\n${adminRole ? `**Admin Role:** ${adminRole}` : ""}`,
-      ephemeral: true,
     });
   },
 };
