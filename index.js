@@ -8,7 +8,7 @@ dotenv.config();
 
 // === Express web server (keeps Render/host alive) ===
 const app = express();
-app.get("/", (req, res) => res.send("✅ GVGCRP Bot is running!"));
+app.get("/", (req, res) => res.send("✅ GVGCRPSUPPORT Bot is running!"));
 app.listen(process.env.PORT || 3000, () => console.log("🌐 Web server active."));
 
 // === MongoDB Connection ===
